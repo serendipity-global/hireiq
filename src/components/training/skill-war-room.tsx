@@ -482,9 +482,28 @@ export default function SkillWarRoom({ skill, skillData, candidateRole, candidat
 
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '14px', fontWeight: 500, color: '#09090b', marginBottom: '12px' }}>Now it's your turn:</p>
-              <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px', padding: '14px', marginBottom: '12px' }}>
-                <p style={{ fontSize: '15px', fontWeight: 500, color: '#09090b' }}>"{currentQuestion?.question}"</p>
-              </div>
+              <div style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: '10px', padding: '14px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+  <p style={{ fontSize: '15px', fontWeight: 500, color: '#09090b' }}>"{currentQuestion?.question}"</p>
+  {frameContent?.questions?.length > 1 && (
+    <button
+      onClick={() => {
+        const questions = frameContent.questions
+        const currentIndex = questions.findIndex((q: any) => q.question === currentQuestion?.question)
+        const nextIndex = (currentIndex + 1) % questions.length
+        setCurrentQuestion(questions[nextIndex])
+        setAnswer('')
+      }}
+      title="Change question"
+      style={{
+        flexShrink: 0, background: 'none', border: '1px solid rgba(99,102,241,0.3)',
+        borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontSize: '12px',
+        color: '#6366f1', fontWeight: 500, whiteSpace: 'nowrap',
+      }}
+    >
+      Next question →
+    </button>
+  )}
+</div>
               <textarea
                 ref={textareaRef}
                 value={answer}
