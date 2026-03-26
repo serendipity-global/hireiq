@@ -28,11 +28,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be under 5MB' }, { status: 400 })
     }
 
-    // Extract text from PDF
     const arrayBuffer = await file.arrayBuffer()
     const { text: rawText } = await extractText(new Uint8Array(arrayBuffer), { mergePages: true })
 
-    // Clean and validate text
     const cleanedText = cleanResumeText(rawText)
     const validation = validateResumeText(cleanedText)
 
@@ -40,21 +38,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.reason }, { status: 400 })
     }
 
-    // Analyze with Claude (includes retry + Zod validation)
     const analysis = await analyzeResume(cleanedText)
 
-    // Save to Supabase
-    const { data: resume, error } = await supabase
+    // Check if resume already exists for this user
+    const { data: existing } = await supabase
       .from('resumes')
-      .upsert({
-        user_id: user.id,
-        file_name: file.name,
-        raw_text: cleanedText,
-        parsed_data: analysis,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
+      .select('id')
+      .eq('user_id', user.id)
       .single()
+
+    let resume
+    let error
+
+    if (existing?.id) {
+      // Update existing
+      const result = await supabase
+        .from('resumes')
+        .update({
+          file_name: file.name,
+          raw_text: cleanedText,
+          parsed_data: analysis,
+          interview_dna: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id)
+        .select()
+        .single()
+      resume = result.data
+      error = result.error
+    } else {
+      // Insert new
+      const result = await supabase
+        .from('resumes')
+        .insert({
+          user_id: user.id,
+          file_name: file.name,
+          raw_text: cleanedText,
+          parsed_data: analysis,
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+      resume = result.data
+      error = result.error
+    }
 
     if (error) {
       console.error('Supabase error:', error)
@@ -65,8 +92,8 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Resume analysis error:', error)
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Internal server error' 
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Internal server error'
     }, { status: 500 })
   }
 }
