@@ -20,6 +20,7 @@ export default async function SkillWarRoomPage({
     .from('resumes')
     .select('parsed_data, interview_dna, raw_text')
     .eq('user_id', user.id)
+    .eq('is_active', true)  
     .single()
 
   const { data: session } = await supabase

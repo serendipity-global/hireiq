@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import ResumeSelector from './resume-selector'
 
 export default async function Topbar({ title }: { title: string }) {
   const supabase = await createClient()
@@ -10,6 +11,14 @@ export default async function Topbar({ title }: { title: string }) {
 
   const fullName = user?.user_metadata?.full_name ?? user?.email ?? ''
   const avatarUrl = user?.user_metadata?.avatar_url ?? null
+
+  const { data: resumes } = await supabase
+    .from('resumes')
+    .select('id, file_name, is_active, updated_at')
+    .eq('user_id', user?.id ?? '')
+    .order('updated_at', { ascending: false })
+
+  const activeResume = resumes?.find(r => r.is_active) ?? resumes?.[0] ?? null
 
   return (
     <header style={{
@@ -24,52 +33,37 @@ export default async function Topbar({ title }: { title: string }) {
       top: 0,
       zIndex: 50,
     }}>
-      <h1 style={{
-        fontSize: '15px',
-        fontWeight: 500,
-        color: '#09090b',
-      }}>{title}</h1>
+      <h1 style={{ fontSize: '15px', fontWeight: 500, color: '#09090b' }}>{title}</h1>
 
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '10px',
-        background: '#f4f4f5',
-        border: '1px solid #e4e4e7',
-        borderRadius: '40px',
-        padding: '4px 14px 4px 4px',
-      }}>
-        {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt={fullName}
-            width={30}
-            height={30}
-            style={{
-              borderRadius: '50%',
-              flexShrink: 0,
-              objectFit: 'cover',
-            }}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+
+        {/* Resume selector */}
+        {resumes && resumes.length > 0 && (
+          <ResumeSelector
+            resumes={resumes}
+            activeResumeId={activeResume?.id ?? null}
           />
-        ) : (
-          <div style={{
-            width: '30px',
-            height: '30px',
-            borderRadius: '50%',
-            background: '#6366f1',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '11px',
-            fontWeight: 600,
-            color: 'white',
-            flexShrink: 0,
-          }}>{initials}</div>
         )}
-        <span style={{
-          fontSize: '13px',
-          color: '#52525b',
-        }}>{fullName}</span>
+
+        {/* User badge */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: '#f4f4f5', border: '1px solid #e4e4e7',
+          borderRadius: '40px', padding: '4px 14px 4px 4px',
+        }}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={fullName} width={30} height={30}
+              style={{ borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }} />
+          ) : (
+            <div style={{
+              width: '30px', height: '30px', borderRadius: '50%',
+              background: '#6366f1', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: '11px', fontWeight: 600,
+              color: 'white', flexShrink: 0,
+            }}>{initials}</div>
+          )}
+          <span style={{ fontSize: '13px', color: '#52525b' }}>{fullName}</span>
+        </div>
       </div>
     </header>
   )

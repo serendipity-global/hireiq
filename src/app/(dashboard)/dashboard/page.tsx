@@ -18,6 +18,7 @@ export default async function DashboardPage() {
     .from('resumes')
     .select('parsed_data, interview_dna, file_name, updated_at')
     .eq('user_id', user.id)
+    .eq('is_active', true)  
     .single()
 
   const { data: sessions } = await supabase

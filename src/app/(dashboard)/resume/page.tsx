@@ -11,6 +11,7 @@ export default async function ResumePage() {
     .from('resumes')
     .select('parsed_data, interview_dna, file_name, updated_at, optimization_data')
     .eq('user_id', user?.id ?? '')
+    .eq('is_active', true)  
     .single()
 
   const primaryRole = (resume?.parsed_data as any)?.primaryRole ?? null

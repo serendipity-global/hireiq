@@ -11,6 +11,8 @@ import {
   TrendingUp,
   GraduationCap,
   LogOut,
+  BookOpen,
+  Target,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
@@ -31,6 +33,19 @@ const navItems: {
       { label: 'War Room', href: '/training/warroom', icon: Swords },
       { label: 'Training', href: '/training', icon: BrainCircuit },
       { label: 'Progress', href: '/progress', icon: TrendingUp },
+    ],
+  },
+  {
+    section: 'Study',
+    items: [
+      { label: 'Study Guide', href: '/study', icon: BookOpen },
+    ],
+  },
+  {
+    section: 'Job Fit',
+    items: [
+      { label: 'Analyze Job', href: '/job-fit/new', icon: Target },
+      { label: 'My Jobs', href: '/job-fit', icon: FileText },
     ],
   },
   {
@@ -122,7 +137,7 @@ export default function Sidebar() {
             }}>{section.section}</p>
             {section.items.map((item) => {
               const Icon = item.icon
-              const isActive = pathname === item.href
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
               const isComingSoon = item.comingSoon
               return (
                 <Link

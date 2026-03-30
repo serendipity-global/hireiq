@@ -4,7 +4,7 @@ export const InterviewPersonaSchema = z.object({
   firstImpression: z.string(),
   perceivedStrength: z.string(),
   perceivedWeakness: z.string(),
-  hiringManagerConcerns: z.array(z.string()).min(3).max(5),
+  hiringManagerConcerns: z.array(z.string()).min(1).max(5),
   whatTheyNeedToHear: z.string(),
 })
 
@@ -36,8 +36,8 @@ export const SkillTier3Schema = z.object({
 })
 
 export const SkillMapSchema = z.object({
-  tier1: z.array(SkillTier1Schema).min(8).max(15),
-  tier2: z.array(SkillTier2Schema).min(5).max(25),
+  tier1: z.array(SkillTier1Schema).min(1).max(15),
+  tier2: z.array(SkillTier2Schema).min(0).max(25),
   tier3: z.array(SkillTier3Schema),
 })
 
@@ -47,7 +47,7 @@ export const WeaknessFingerprintSchema = z.object({
     situation: z.string(),
     reason: z.string(),
     fix: z.string(),
-  })).min(2).max(5),
+  })).min(1).max(5),
   blindSpots: z.array(z.string()).min(1).max(5),
 })
 
@@ -79,7 +79,7 @@ export const BattlePlanItemSchema = z.object({
 export const ProbabilityEngineSchema = z.object({
   currentHireProbability: z.number().min(0).max(100),
   afterPreparationProbability: z.number().min(0).max(100),
-  keyLeverPoints: z.array(z.string()).min(3).max(3),
+  keyLeverPoints: z.array(z.string()).min(1).max(5),
   dealBreakers: z.array(z.string()).min(1).max(5),
 })
 
@@ -88,9 +88,9 @@ export const InterviewDNASchema = z.object({
   skillMap: SkillMapSchema,
   weaknessFingerprint: WeaknessFingerprintSchema,
   marketPosition: MarketPositionSchema,
-  battlePlan: z.array(BattlePlanItemSchema).min(3).max(10),
+  battlePlan: z.array(BattlePlanItemSchema).min(1).max(10),
   probabilityEngine: ProbabilityEngineSchema,
-  harshReality: z.array(z.string()).min(3).max(5),
+  harshReality: z.array(z.string()).min(1).max(5),
 })
 
 export type InterviewDNA = z.infer<typeof InterviewDNASchema>

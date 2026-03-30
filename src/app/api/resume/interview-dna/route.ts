@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
       .from('resumes')
       .update({ interview_dna: dna })
       .eq('user_id', user.id)
+      .eq('is_active', true)  
 
     if (error) {
       console.error('Supabase error:', error)

@@ -28,6 +28,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be under 5MB' }, { status: 400 })
     }
 
+    // Verificar límite de 5 resumes
+    const { count } = await supabase
+      .from('resumes')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+
+    if ((count ?? 0) >= 5) {
+      return NextResponse.json({
+        error: 'You have reached the maximum of 5 resumes. Please delete one before uploading a new one.'
+      }, { status: 400 })
+    }
+
     const arrayBuffer = await file.arrayBuffer()
     const { text: rawText } = await extractText(new Uint8Array(arrayBuffer), { mergePages: true })
 
@@ -40,48 +52,31 @@ export async function POST(request: NextRequest) {
 
     const analysis = await analyzeResume(cleanedText)
 
-    // Check if resume already exists for this user
-    const { data: existing } = await supabase
+    // Desactivar todos los resumes existentes
+    await supabase
       .from('resumes')
-      .select('id')
+      .update({ is_active: false })
       .eq('user_id', user.id)
+
+    // Nuevo resume = reset del progreso de War Room
+    await supabase
+      .from('war_room_sessions')
+      .delete()
+      .eq('user_id', user.id)
+
+    // Insertar siempre como nuevo resume activo
+    const { data: resume, error } = await supabase
+      .from('resumes')
+      .insert({
+        user_id: user.id,
+        file_name: file.name,
+        raw_text: cleanedText,
+        parsed_data: analysis,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
+      .select()
       .single()
-
-    let resume
-    let error
-
-    if (existing?.id) {
-      // Update existing
-      const result = await supabase
-        .from('resumes')
-        .update({
-          file_name: file.name,
-          raw_text: cleanedText,
-          parsed_data: analysis,
-          interview_dna: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existing.id)
-        .select()
-        .single()
-      resume = result.data
-      error = result.error
-    } else {
-      // Insert new
-      const result = await supabase
-        .from('resumes')
-        .insert({
-          user_id: user.id,
-          file_name: file.name,
-          raw_text: cleanedText,
-          parsed_data: analysis,
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single()
-      resume = result.data
-      error = result.error
-    }
 
     if (error) {
       console.error('Supabase error:', error)

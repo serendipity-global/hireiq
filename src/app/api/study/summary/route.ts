@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { optimizeResume } from '@/lib/ai/providers/resume-optimizer'
+import { analyzeProfessionalSummary } from '@/lib/ai/providers/professional-summary'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
@@ -11,35 +11,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { targetRole } = body
-
-    // Get resume from Supabase
     const { data: resume } = await supabase
       .from('resumes')
-      .select('raw_text, parsed_data')
+      .select('raw_text')
       .eq('user_id', user.id)
       .eq('is_active', true)  
       .single()
 
     if (!resume?.raw_text) {
-      return NextResponse.json({ error: 'No resume found. Please upload your resume first.' }, { status: 400 })
+      return NextResponse.json({ error: 'No resume found' }, { status: 400 })
     }
 
-    const primaryRole = (resume.parsed_data as any)?.primaryRole ?? targetRole ?? undefined
+    const analysis = await analyzeProfessionalSummary(resume.raw_text)
 
-    const optimization = await optimizeResume(resume.raw_text, primaryRole)
-
-    // Save to Supabase
     await supabase
       .from('resumes')
-      .update({ optimization_data: optimization })
+      .update({ summary_guide: analysis })
       .eq('user_id', user.id)
 
-    return NextResponse.json({ success: true, optimization })
+    return NextResponse.json({ success: true, analysis })
 
   } catch (error) {
-    console.error('Resume optimization error:', error)
+    console.error('Summary analysis error:', error)
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Internal server error'
     }, { status: 500 })

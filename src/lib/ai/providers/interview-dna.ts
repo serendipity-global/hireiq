@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { INTERVIEW_DNA_PROMPT } from '../prompts/interview-dna'
+import { getInterviewDNAPrompt } from '../prompts/interview-dna'
 import { InterviewDNASchema, InterviewDNA } from '../schemas/interview-dna-zod'
 
 const client = new Anthropic({
@@ -13,7 +13,7 @@ async function callClaude(resumeText: string): Promise<string> {
     messages: [
       {
         role: 'user',
-        content: `${INTERVIEW_DNA_PROMPT}\n\nRESUME TEXT:\n${resumeText}`,
+        content: `${getInterviewDNAPrompt()}\n\nRESUME TEXT:\n${resumeText}`,
       },
     ],
   })

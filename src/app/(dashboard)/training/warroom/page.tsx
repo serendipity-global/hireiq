@@ -15,6 +15,7 @@ export default async function WarRoomPage() {
     .from('resumes')
     .select('parsed_data, interview_dna')
     .eq('user_id', user.id)
+    .eq('is_active', true)  
     .single()
 
   const dna = resume?.interview_dna as any
