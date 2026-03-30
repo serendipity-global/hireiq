@@ -1,7 +1,7 @@
 import Topbar from '@/components/layout/topbar'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { BrainCircuit, Swords, AlertTriangle, TrendingUp, Upload, ChevronRight, Target } from 'lucide-react'
+import { BrainCircuit, Swords, AlertTriangle, TrendingUp, Upload, ChevronRight, Target, Send, Phone, Trophy } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function DashboardPage() {
@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     .from('resumes')
     .select('parsed_data, interview_dna, file_name, updated_at')
     .eq('user_id', user.id)
-    .eq('is_active', true)  
+    .eq('is_active', true)
     .single()
 
   const { data: sessions } = await supabase
@@ -26,6 +26,12 @@ export default async function DashboardPage() {
     .select('skill_name, final_score, session_completed, evaluation, updated_at')
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
+
+  const { data: jobFits } = await supabase
+    .from('job_fits')
+    .select('id, job_title, company, fit_analysis, status, mode, created_at')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
 
   const parsedData = resume?.parsed_data as any
   const dna = resume?.interview_dna as any
@@ -41,10 +47,31 @@ export default async function DashboardPage() {
   const afterPrepProbability = dna?.probabilityEngine?.afterPreparationProbability ?? null
   const topQuestions = parsedData?.topPredictedQuestions?.slice(0, 4) ?? []
 
+  const totalJobs = jobFits?.length ?? 0
+  const appliedJobs = jobFits?.filter(j => j.status === 'applied').length ?? 0
+  const interviewingJobs = jobFits?.filter(j => j.status === 'interviewing').length ?? 0
+  const offerJobs = jobFits?.filter(j => j.status === 'offer').length ?? 0
+  const recentJobs = jobFits?.slice(0, 4) ?? []
+
   const scoreColor = (score: number) => {
     if (score >= 75) return '#16a34a'
     if (score >= 50) return '#d97706'
     return '#dc2626'
+  }
+
+  const fitLevelColor = (level: string) => {
+    if (level === 'Excellent') return { color: '#16a34a', bg: 'rgba(22,163,74,0.08)' }
+    if (level === 'Strong') return { color: '#6366f1', bg: 'rgba(99,102,241,0.08)' }
+    if (level === 'Moderate') return { color: '#d97706', bg: 'rgba(217,119,6,0.08)' }
+    return { color: '#dc2626', bg: 'rgba(220,38,38,0.08)' }
+  }
+
+  const statusInfo = (status: string) => {
+    if (status === 'applied') return { color: '#6366f1', label: 'Applied' }
+    if (status === 'interviewing') return { color: '#d97706', label: 'Interviewing' }
+    if (status === 'offer') return { color: '#16a34a', label: 'Offer' }
+    if (status === 'rejected') return { color: '#dc2626', label: 'Rejected' }
+    return { color: '#a1a1aa', label: 'Analyzing' }
   }
 
   return (
@@ -112,7 +139,7 @@ export default async function DashboardPage() {
               </div>
             </div>
 
-            {/* Metrics */}
+            {/* Interview Prep Metrics */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '16px' }}>
               <div style={{ background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '24px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -164,6 +191,28 @@ export default async function DashboardPage() {
               </div>
             </div>
 
+            {/* Job Hunt Metrics */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '16px' }}>
+              {[
+                { label: 'Jobs analyzed', value: totalJobs, color: '#09090b', icon: Target },
+                { label: 'Applied', value: appliedJobs, color: '#6366f1', icon: Send },
+                { label: 'Interviewing', value: interviewingJobs, color: '#d97706', icon: Phone },
+                { label: 'Offers', value: offerJobs, color: '#16a34a', icon: Trophy },
+              ].map(({ label, value, color, icon: Icon }) => (
+                <Link key={label} href="/job-fit" style={{ textDecoration: 'none' }}>
+                  <div style={{ background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '24px', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                      <Icon size={14} strokeWidth={1.5} style={{ color: '#a1a1aa' }} />
+                      <span style={{ fontSize: '13px', color: '#71717a' }}>{label}</span>
+                    </div>
+                    <div style={{ fontSize: '36px', fontWeight: 600, color: value > 0 ? color : '#09090b', fontFamily: 'var(--font-geist-mono), monospace', letterSpacing: '-1px' }}>
+                      {value > 0 ? value : '—'}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
             {/* Bottom Grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '16px' }}>
 
@@ -204,8 +253,61 @@ export default async function DashboardPage() {
               {/* Right column */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
+                {/* Recent Jobs */}
+                <div style={{ background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '24px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                    <p style={{ fontSize: '11px', fontWeight: 500, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                      Recent jobs
+                    </p>
+                    <Link href="/job-fit/new" style={{ fontSize: '12px', color: '#6366f1', textDecoration: 'none', fontWeight: 500 }}>
+                      + New →
+                    </Link>
+                  </div>
+                  {recentJobs.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {recentJobs.map((job: any, i: number) => {
+                        const level = fitLevelColor(job.fit_analysis?.fitLevel ?? '')
+                        const s = statusInfo(job.status ?? 'analyzing')
+                        return (
+                          <Link key={i} href={`/job-fit/${job.id}`} style={{ textDecoration: 'none' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '8px', background: '#f8f8f9' }}>
+                              <div style={{
+                                width: '32px', height: '32px', borderRadius: '8px',
+                                background: level.bg, display: 'flex', alignItems: 'center',
+                                justifyContent: 'center', flexShrink: 0,
+                              }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: level.color }}>
+                                  {job.fit_analysis?.fitScore ?? '?'}
+                                </span>
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <p style={{ fontSize: '13px', fontWeight: 500, color: '#09090b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {job.job_title}
+                                </p>
+                                <p style={{ fontSize: '11px', color: '#a1a1aa' }}>{job.company}</p>
+                              </div>
+                              <span style={{ fontSize: '11px', fontWeight: 500, color: s.color, flexShrink: 0 }}>
+                                {s.label}
+                              </span>
+                            </div>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '24px' }}>
+                      <p style={{ fontSize: '13px', color: '#71717a', marginBottom: '12px' }}>No jobs analyzed yet</p>
+                      <Link href="/job-fit/new" style={{
+                        fontSize: '13px', color: '#6366f1', textDecoration: 'none', fontWeight: 500,
+                      }}>
+                        Analyze your first job →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
                 {/* War Room Progress */}
-                <div style={{ background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '24px', flex: 1 }}>
+                <div style={{ background: '#ffffff', border: '1px solid #e4e4e7', borderRadius: '16px', padding: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                     <p style={{ fontSize: '11px', fontWeight: 500, color: '#a1a1aa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                       War Room progress
@@ -214,31 +316,13 @@ export default async function DashboardPage() {
                       View all →
                     </Link>
                   </div>
-
-                  {/* Legend */}
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16a34a' }} />
-                      <span style={{ fontSize: '11px', color: '#a1a1aa' }}>Completed</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#d97706' }} />
-                      <span style={{ fontSize: '11px', color: '#a1a1aa' }}>In progress</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#d4d4d8' }} />
-                      <span style={{ fontSize: '11px', color: '#a1a1aa' }}>Not started</span>
-                    </div>
-                  </div>
-
                   {tier1Skills.length > 0 ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {tier1Skills.slice(0, 5).map((skill: any, i: number) => {
+                      {tier1Skills.slice(0, 4).map((skill: any, i: number) => {
                         const session = sessions?.find(s => s.skill_name.toLowerCase() === skill.name.toLowerCase())
                         const skillScore = session?.final_score?.finalScore ?? null
                         const isStarted = !!session
                         const isCompleted = session?.session_completed ?? false
-
                         return (
                           <Link key={i} href={`/training/warroom/${encodeURIComponent(skill.name)}`} style={{ textDecoration: 'none' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', borderRadius: '8px', background: '#f8f8f9' }}>
@@ -260,7 +344,7 @@ export default async function DashboardPage() {
                       })}
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px', textAlign: 'center' }}>
+                    <div style={{ textAlign: 'center', padding: '24px' }}>
                       <p style={{ fontSize: '13px', color: '#71717a' }}>Upload resume to unlock skill training</p>
                     </div>
                   )}
