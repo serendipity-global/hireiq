@@ -13,6 +13,7 @@ import {
   LogOut,
   BookOpen,
   Target,
+  Rss,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
