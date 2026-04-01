@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import {
   Target, Building2, CheckCircle2, AlertTriangle, XCircle,
-  ChevronDown, ChevronUp, ArrowLeft, Plus, Send, Phone, Trophy, XOctagon
+  ChevronDown, ChevronUp, ArrowLeft, Plus, Send, Phone, Trophy, XOctagon, Brain, Mic
 } from 'lucide-react'
 import Link from 'next/link'
+
 
 interface Props {
   jobFit: {
@@ -244,6 +245,41 @@ export default function JobFitResult({ jobFit }: Props) {
             </p>
           )}
         </div>
+
+        {/* Interview Training CTA */}
+        {/* Interview Training + Copilot CTAs */}
+        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #f4f4f5' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <Link
+              href={`/job-fit/${jobFit.id}/training`}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: '#18181b', color: 'white',
+                fontSize: '14px', fontWeight: 500,
+                padding: '10px 20px', borderRadius: '10px',
+                textDecoration: 'none',
+              }}
+            >
+              <Brain size={15} /> Interview Training
+            </Link>
+            <Link
+              href={`/job-fit/${jobFit.id}/copilot`}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'rgba(99,102,241,0.08)', color: '#6366f1',
+                fontSize: '14px', fontWeight: 500,
+                padding: '10px 20px', borderRadius: '10px',
+                textDecoration: 'none', border: '1px solid rgba(99,102,241,0.2)',
+              }}
+            >
+              <Mic size={15} /> Interview Copilot
+            </Link>
+          </div>
+          <p style={{ fontSize: '12px', color: '#a1a1aa', marginTop: '8px' }}>
+            Training: 3 levels · 9 questions &nbsp;·&nbsp; Copilot: real-time AI assistance during your interview
+          </p>
+        </div>  
+
 
         {/* Interview probability */}
         <div style={{

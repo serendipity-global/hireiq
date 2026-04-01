@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Target, Plus, Trash2, ChevronRight, Building2, Send, Phone, Trophy, XOctagon, Zap, Clock } from 'lucide-react'
+import { Target, Plus, Trash2, ChevronRight, Building2, Send, Phone, Trophy, XOctagon, Zap, Clock, Brain } from 'lucide-react'
 import Link from 'next/link'
 
 interface JobFit {
@@ -214,6 +214,7 @@ export default function JobFitList({ jobFits: initial }: Props) {
                   </div>
 
                   {/* Actions */}
+                  {/* Actions */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     <button
                       onClick={() => handleDelete(job.id)}
@@ -227,12 +228,26 @@ export default function JobFitList({ jobFits: initial }: Props) {
                     >
                       <Trash2 size={14} />
                     </button>
-                    <Link href={`/job-fit/${job.id}`} style={{
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                      padding: '8px 14px', borderRadius: '8px',
-                      background: 'rgba(99,102,241,0.08)', color: '#6366f1',
-                      fontSize: '13px', fontWeight: 500, textDecoration: 'none',
-                    }}>
+                    <Link
+                      href={`/job-fit/${job.id}/training`}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 14px', borderRadius: '8px',
+                        background: '#18181b', color: 'white',
+                        fontSize: '13px', fontWeight: 500, textDecoration: 'none',
+                      }}
+                    >
+                      <Brain size={13} /> Train
+                    </Link>
+                    <Link
+                      href={`/job-fit/${job.id}`}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
+                        padding: '8px 14px', borderRadius: '8px',
+                        background: 'rgba(99,102,241,0.08)', color: '#6366f1',
+                        fontSize: '13px', fontWeight: 500, textDecoration: 'none',
+                      }}
+                    >
                       View <ChevronRight size={13} />
                     </Link>
                   </div>
